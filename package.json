@@ -1,0 +1,12 @@
+{
+  "name": "statement-sleuth",
+  "version": "1.0.0",
+  "description": "Find bank fees you can get refunded and subscriptions you forgot. Runs entirely in your browser.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build": "node tools/build.js",
+    "serve": "node tools/build.js && node tools/serve.js"
+  },
+  "license": "MIT"
+}
