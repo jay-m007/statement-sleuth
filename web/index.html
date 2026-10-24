@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#14213d">
+<title>Statement Sleuth</title>
+<meta name="description" content="Find bank fees you can ask back and subscriptions you forgot, and get reminders before they renew. Works offline; your statement never leaves your device.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="brand"><svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 9h10M7 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 17h10" stroke="var(--hi-line)" stroke-width="4" stroke-linecap="round"/></svg><span>Statement Sleuth</span></div>
+  <p class="privacy" id="privacy"><span class="dot" aria-hidden="true"></span>Nothing is uploaded. Your file stays on this device.</p>
+</header>
+
+<div id="banner" class="banner" role="status" aria-live="polite" hidden></div>
+
+<main id="main">
+  <section id="start" class="start">
+    <h1>Banks charge fees. Some will give them back.</h1>
+    <p class="lede">Drop in a bank statement and Statement Sleuth lists the fees worth asking about, finds subscriptions you may have forgotten, and reminds you before the next one renews.</p>
+
+    <div class="ledger-demo" aria-hidden="true">
+      <div class="row"><span>12 Oct</span><span>SPOTIFY INDIA PVT LTD</span><span class="amt"><mark class="sub">119.00</mark></span></div>
+      <div class="row"><span>14 Oct</span><span>SWIGGY ORDER</span><span class="amt">340.00</span></div>
+      <div class="row"><span>19 Oct</span><span>OVERDRAFT FEE</span><span class="amt"><mark class="fee">500.00</mark></span></div>
+      <div class="row"><span>19 Oct</span><span>GST ON OD FEE</span><span class="amt"><mark class="fee">90.00</mark></span></div>
+    </div>
+
+    <div class="pick">
+      <label class="drop" id="drop" for="file">
+        <input id="file" type="file" accept=".csv,text/csv,text/plain">
+        <strong>Choose your statement (.csv)</strong>
+        <span>or drag it here</span>
+      </label>
+      <button class="ghost" id="sample" type="button">Try it with a sample statement</button>
+    </div>
+    <p id="error" class="error" role="alert" hidden></p>
+
+    <details class="how">
+      <summary>How do I get a CSV from my bank?</summary>
+      <p>Most banks offer it in net banking or the app: open <em>Account statement</em>, choose a date range (6 to 12 months works best), and pick <em>CSV</em> or <em>Excel</em> as the format. If you only get an Excel file, open it and use <em>Save as CSV</em>. PDFs are not supported yet.</p>
+      <p>The file needs a date, a description (also called narration or particulars), and either one amount column or separate debit and credit columns.</p>
+    </details>
+
+    <fieldset class="opts">
+      <legend>Settings</legend>
+      <label>Currency
+        <select id="currency"><option value="₹">₹ Rupee</option><option value="$">$ Dollar</option><option value="£">£ Pound</option><option value="€">€ Euro</option></select>
+      </label>
+      <label>Dates like 05/03/2026 mean
+        <select id="dateOrder"><option value="dmy">5 March (day first)</option><option value="mdy">3 May (month first)</option></select>
+      </label>
+      <label class="check"><input type="checkbox" id="spendPos"> In my file, spending shows as positive numbers (some credit cards)</label>
+    </fieldset>
+  </section>
+
+  <section id="results" hidden>
+    <div class="toolbar">
+      <p id="period" class="muted"></p>
+      <div class="toolbar-btns">
+        <button class="ghost" id="again" type="button">Use another file</button>
+        <button class="ghost" id="clear" type="button">Clear everything</button>
+      </div>
+    </div>
+    <p id="hint" class="notice" hidden></p>
+
+    <div class="figures" id="figures"></div>
+
+    <div class="tabs" role="tablist" aria-label="Results">
+      <button role="tab" id="tab-renew" aria-controls="panel-renew" aria-selected="true">Renewals</button>
+      <button role="tab" id="tab-fees" aria-controls="panel-fees" aria-selected="false" tabindex="-1">Fees</button>
+      <button role="tab" id="tab-ledger" aria-controls="panel-ledger" aria-selected="false" tabindex="-1">Statement</button>
+    </div>
+
+    <div role="tabpanel" id="panel-renew" aria-labelledby="tab-renew"></div>
+    <div role="tabpanel" id="panel-fees" aria-labelledby="tab-fees" hidden></div>
+    <div role="tabpanel" id="panel-ledger" aria-labelledby="tab-ledger" hidden></div>
+  </section>
+</main>
+
+<footer>
+  <p>Refunds are never guaranteed. Statement Sleuth tells you what is worth asking about; it is not legal or financial advice. A college project, open source: <a href="https://github.com/jay-m007/statement-sleuth">github.com/jay-m007/statement-sleuth</a>.</p>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>
