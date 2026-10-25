@@ -1,0 +1,10 @@
+{
+  "appId": "com.jaymaurya.statementsleuth",
+  "appName": "Statement Sleuth",
+  "webDir": "site",
+  "backgroundColor": "#14213d",
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "LocalNotifications": { "smallIcon": "ic_stat_icon", "iconColor": "#14213d" }
+  }
+}

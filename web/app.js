@@ -1,4 +1,4 @@
-import { analyze, buildICS, googleCalendarLink, feeLetter, duplicateLetter, upcoming, todayStr } from "./engine/index.js";
+import { analyze, buildICS, googleCalendarLink, feeLetter, duplicateLetter, upcoming, todayStr, planNotifications } from "./engine/index.js";
 import { sampleStatement } from "./engine/sample.js";
 import { nextDue, subscriptionInsights } from "./engine/subs.js";
 import { pretty, prettyShort, daysBetween } from "./engine/dates.js";
@@ -48,12 +48,45 @@ function rollForward(plan) {
 }
 const PER_YEAR = { weekly: 52, monthly: 12, quarterly: 4, yearly: 1 };
 const LABEL = { weekly: "weekly", monthly: "monthly", quarterly: "every 3 months", yearly: "yearly" };
-function savePlan() { if (state.keep) store.set("ss.plan", state.plan); }
+function savePlan() { if (state.keep) store.set("ss.plan", state.plan); syncPhoneSoon(); }
 function sortedPlan() { return [...state.plan].sort((a, b) => (a.nextDue || "9").localeCompare(b.nextDue || "9")); }
 
 function dueWords(d) {
   const n = daysBetween(todayStr(), d);
   return n === 0 ? "today" : n === 1 ? "tomorrow" : n < 0 ? `${-n} days ago` : `in ${n} days`;
+}
+
+/* ---------- phone reminders (only inside the Android/iOS app) ---------- */
+// Inside the app, Capacitor puts its plugins on window. On the website this is undefined and nothing below runs.
+const native = () => { try { return !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()); } catch { return false; } };
+const LN = () => (native() && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) || null;
+let phoneTimer = 0;
+async function phonePermission(ask) {
+  const ln = LN(); if (!ln) return "unavailable";
+  let p = (await ln.checkPermissions()).display;
+  if (p === "prompt" || p === "prompt-with-rationale") { if (!ask) return p; p = (await ln.requestPermissions()).display; }
+  return p;
+}
+async function syncPhoneReminders() {
+  const ln = LN(); if (!ln || !store.get("ss.phone", false)) return 0;
+  if ((await phonePermission(false)) !== "granted") return 0;
+  try { await ln.createChannel({ id: "renewals", name: "Renewal reminders", description: "Warnings before a subscription renews", importance: 4 }); } catch { /* channels are Android only */ }
+  const pending = await ln.getPending();
+  if (pending.notifications && pending.notifications.length) await ln.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) });
+  const now = new Date();
+  const list = planNotifications(state.plan, { today: todayStr(), nowMinutes: now.getHours() * 60 + now.getMinutes(), leadDays: state.lead, currency: state.currency });
+  if (!list.length) return 0;
+  await ln.schedule({ notifications: list.map((n) => ({ id: n.id, title: n.title, body: n.body, channelId: "renewals", isExactNotification: false, schedule: { at: new Date(n.at), allowWhileIdle: true } })) });
+  return list.length;
+}
+function syncPhoneSoon() { clearTimeout(phoneTimer); phoneTimer = setTimeout(() => { syncPhoneReminders().catch(() => {}); }, 400); }
+async function enablePhone(status) {
+  const p = await phonePermission(true);
+  if (p !== "granted") { status.textContent = "Notifications are off for this app. Turn them on in your phone's Settings > Apps > Statement Sleuth > Notifications, then try again."; return; }
+  store.set("ss.phone", true);
+  if (!state.keep) { state.keep = true; store.set("ss.keep", true); store.set("ss.plan", state.plan); }
+  const n = await syncPhoneReminders();
+  status.textContent = n ? `Done. ${n} reminders are set on this phone and will ring even when the app is closed. Open the app now and then to keep them topped up.` : "Reminders are on. Nothing renews in the next 90 days; they will be set up when something does.";
 }
 
 /* ---------- alerts ---------- */
@@ -144,12 +177,16 @@ function renderRenewals() {
     h("div", { class: "chips", role: "group", "aria-label": "Remind me" }, leadChoices.map(([d, label]) =>
       h("button", { class: "small alt", type: "button", "aria-pressed": String(state.lead.includes(d)), onclick: () => {
         state.lead = state.lead.includes(d) ? state.lead.filter((x) => x !== d) : [...state.lead, d].sort((a, b) => b - a);
-        store.set("ss.lead", state.lead); renderRenewals(); renderBanner();
+        store.set("ss.lead", state.lead); renderRenewals(); renderBanner(); syncPhoneSoon();
       } }, label))),
-    h("div", { class: "actions" },
-      h("button", { class: "btn", type: "button", onclick: () => downloadICS(status) }, "Download calendar reminders"),
-      h("button", { class: "ghost", type: "button", onclick: () => enableAlerts(status) }, "Alert me when I open this page")),
-    h("p", { class: "meta" }, "The calendar file is the reliable one: open it on your phone and Apple Calendar or Outlook will ring before each renewal even when this page is closed. Google Calendar adds the events but may use its own default reminder. Browser alerts only appear while this page is open."),
+    native()
+      ? h("div", { class: "actions" }, h("button", { class: "btn", type: "button", onclick: () => enablePhone(status) }, store.get("ss.phone", false) ? "Refresh phone reminders" : "Turn on phone reminders"))
+      : h("div", { class: "actions" },
+        h("button", { class: "btn", type: "button", onclick: () => downloadICS(status) }, "Download calendar reminders"),
+        h("button", { class: "ghost", type: "button", onclick: () => enableAlerts(status) }, "Alert me when I open this page")),
+    native()
+      ? h("p", { class: "meta" }, "Reminders are set on this phone at 9 am on the days you picked. They ring even when the app is closed and need no internet. Open the app every month or so: it plans 90 days ahead.")
+      : h("p", { class: "meta" }, "The calendar file is the reliable one: open it on your phone and Apple Calendar or Outlook will ring before each renewal even when this page is closed. Google Calendar adds the events but may use its own default reminder. Browser alerts only appear while this page is open."),
     h("label", { class: "remind-line" }, h("input", { type: "checkbox", checked: state.keep, onchange: (e) => {
       state.keep = e.target.checked; store.set("ss.keep", state.keep);
       if (state.keep) store.set("ss.plan", state.plan); else store.del("ss.plan");
@@ -356,7 +393,9 @@ $("sample").addEventListener("click", () => run(sampleStatement(todayStr())));
 $("again").addEventListener("click", () => { $("file").value = ""; $("results").hidden = true; $("start").hidden = false; window.scrollTo(0, 0); });
 $("clear").addEventListener("click", () => {
   state.result = null; state.plan = []; state.keep = false;
-  ["ss.plan", "ss.keep", "ss.notified", "ss.profile"].forEach(store.del);
+  ["ss.plan", "ss.keep", "ss.notified", "ss.profile", "ss.phone"].forEach(store.del);
+  const ln = LN();
+  if (ln) ln.getPending().then((p) => (p.notifications.length ? ln.cancel({ notifications: p.notifications.map((n) => ({ id: n.id })) }) : null)).catch(() => {});
   $("file").value = ""; $("results").hidden = true; $("start").hidden = false; $("banner").hidden = true; selectTab("renew");
   $("privacy").lastChild.textContent = "Everything cleared from this device.";
 });

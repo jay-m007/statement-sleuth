@@ -122,3 +122,6 @@ tr.is-sub td.d{text-decoration:underline dotted 2px;text-underline-offset:.25em}
 footer{padding-block:1.5rem;color:var(--ink-2);font-size:.85rem}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}.js-anim tr.is-fee td.d{background-size:100% 100%}}
 @media (min-width:40rem){.pick{grid-template-columns:2fr 1fr;align-items:stretch}.pick .ghost{height:100%}}
+.privacy-page{max-width:40rem;margin-inline:auto;padding:1.5rem max(1rem,env(safe-area-inset-left)) 3rem}
+.privacy-page h2{margin-top:1.5rem}
+.privacy-page li{margin-bottom:.4rem}
