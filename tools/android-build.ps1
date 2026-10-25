@@ -12,17 +12,44 @@ Step "3/5 Build the web part and copy it into the Android project"
 npm run build; if ($LASTEXITCODE -ne 0) { Fail "build failed" }
 npx cap sync android; if ($LASTEXITCODE -ne 0) { Fail "cap sync failed" }
 
-Step "4/5 Find Android Studio's Java and the Android SDK"
-$jbr = @("$env:ProgramFiles\Android\Android Studio\jbr", "$env:LOCALAPPDATA\Programs\Android Studio\jbr", "$env:ProgramFiles\Android\Android Studio1\jbr") | Where-Object { Test-Path "$_\bin\java.exe" } | Select-Object -First 1
-if (-not $jbr) { Fail "Could not find Android Studio's Java. Open the 'android' folder in Android Studio instead (File > Open) and press the green Run button." }
+Step "4/5 Find a suitable Java and the Android SDK"
+# Gradle 8.14 (used by Capacitor 8) runs on Java 17 to 24. Newer Android Studio ships Java 25, which is too new, so look for another one.
+function JavaMajor($jh) {
+  $exe = Join-Path $jh "bin\java.exe"
+  if (-not (Test-Path $exe)) { return 0 }
+  $out = (& cmd /c "`"$exe`" -version 2>&1") -join " "
+  if ($out -match 'version "(\d+)') { return [int]$Matches[1] }
+  return 0
+}
+$tools = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) ".tools"
+$cands = @()
+$cands += $env:JAVA_HOME
+$cands += (Get-ChildItem "$tools" -Directory -Filter "jdk*" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+foreach ($root in @("$env:ProgramFiles\Java", "$env:ProgramFiles\Eclipse Adoptium", "$env:ProgramFiles\Microsoft", "$env:ProgramFiles\Amazon Corretto", "$env:ProgramFiles\Zulu")) {
+  $cands += (Get-ChildItem $root -Directory -Filter "*jdk*" -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+}
+$cands += "$env:ProgramFiles\Android\Android Studio\jbr"
+$jbr = $null
+foreach ($c in ($cands | Where-Object { $_ })) { $m = JavaMajor $c; if ($m -ge 17 -and $m -le 24) { $jbr = $c; break } }
+if (-not $jbr) {
+  Write-Host "No Java 17-24 found on this computer. Downloading Eclipse Temurin 21 (about 200 MB, from api.adoptium.net) into $tools ..."
+  New-Item -ItemType Directory -Force -Path $tools | Out-Null
+  $zip = Join-Path $tools "temurin21.zip"
+  try { Invoke-WebRequest -UseBasicParsing -Uri "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jdk/hotspot/normal/eclipse" -OutFile $zip } catch { Fail "Could not download Java 21: $_" }
+  Expand-Archive -Path $zip -DestinationPath $tools -Force
+  Remove-Item $zip -Force
+  $jbr = (Get-ChildItem $tools -Directory -Filter "jdk*" | Select-Object -First 1).FullName
+  if ((JavaMajor $jbr) -lt 17) { Fail "The downloaded Java did not work." }
+}
 $sdk = $null
 foreach ($c in @($env:ANDROID_HOME, $env:ANDROID_SDK_ROOT, "$env:LOCALAPPDATA\Android\Sdk")) { if ($c -and (Test-Path "$c\platform-tools" -PathType Container)) { $sdk = $c; break } }
 if (-not $sdk) { foreach ($c in @($env:ANDROID_HOME, $env:ANDROID_SDK_ROOT, "$env:LOCALAPPDATA\Android\Sdk")) { if ($c -and (Test-Path "$c\platforms" -PathType Container)) { $sdk = $c; break } } }
 if (-not $sdk) { Fail "Could not find the Android SDK. Open Android Studio once, let it finish downloading, then run this again." }
 $env:JAVA_HOME = $jbr
+$env:Path = "$jbr\bin;$env:Path"
 $sdkFwd = $sdk -replace '\\', '/'
 Set-Content -Path "android\local.properties" -Value "sdk.dir=$sdkFwd" -Encoding ASCII
-Write-Host "Java: $jbr"; Write-Host "SDK:  $sdk"
+Write-Host "Java: $jbr (version $(JavaMajor $jbr))"; Write-Host "SDK:  $sdk"
 
 Step "5/5 Build the app (the first time this downloads a lot and can take 10+ minutes)"
 Push-Location android
