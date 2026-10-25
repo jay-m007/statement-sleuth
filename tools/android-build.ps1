@@ -13,7 +13,7 @@ npm run build; if ($LASTEXITCODE -ne 0) { Fail "build failed" }
 npx cap sync android; if ($LASTEXITCODE -ne 0) { Fail "cap sync failed" }
 
 Step "4/5 Find a suitable Java and the Android SDK"
-# Gradle 8.14 (used by Capacitor 8) runs on Java 17 to 24. Newer Android Studio ships Java 25, which is too new, so look for another one.
+# Capacitor 8 builds with Java 21 exactly. Newer Android Studio ships Java 25, which does not work here, so look for a Java 21 or fetch one.
 function JavaMajor($jh) {
   $exe = Join-Path $jh "bin\java.exe"
   if (-not (Test-Path $exe)) { return 0 }
@@ -30,16 +30,16 @@ foreach ($root in @("$env:ProgramFiles\Java", "$env:ProgramFiles\Eclipse Adoptiu
 }
 $cands += "$env:ProgramFiles\Android\Android Studio\jbr"
 $jbr = $null
-foreach ($c in ($cands | Where-Object { $_ })) { $m = JavaMajor $c; if ($m -ge 17 -and $m -le 24) { $jbr = $c; break } }
+foreach ($c in ($cands | Where-Object { $_ })) { $m = JavaMajor $c; if ($m -eq 21) { $jbr = $c; break } }
 if (-not $jbr) {
-  Write-Host "No Java 17-24 found on this computer. Downloading Eclipse Temurin 21 (about 200 MB, from api.adoptium.net) into $tools ..."
+  Write-Host "No Java 21 found on this computer. Downloading Eclipse Temurin 21 (about 200 MB, from api.adoptium.net) into $tools ..."
   New-Item -ItemType Directory -Force -Path $tools | Out-Null
   $zip = Join-Path $tools "temurin21.zip"
   try { Invoke-WebRequest -UseBasicParsing -Uri "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jdk/hotspot/normal/eclipse" -OutFile $zip } catch { Fail "Could not download Java 21: $_" }
   Expand-Archive -Path $zip -DestinationPath $tools -Force
   Remove-Item $zip -Force
   $jbr = (Get-ChildItem $tools -Directory -Filter "jdk*" | Select-Object -First 1).FullName
-  if ((JavaMajor $jbr) -lt 17) { Fail "The downloaded Java did not work." }
+  if ((JavaMajor $jbr) -ne 21) { Fail "The downloaded Java did not work." }
 }
 $sdk = $null
 foreach ($c in @($env:ANDROID_HOME, $env:ANDROID_SDK_ROOT, "$env:LOCALAPPDATA\Android\Sdk")) { if ($c -and (Test-Path "$c\platform-tools" -PathType Container)) { $sdk = $c; break } }
@@ -53,7 +53,8 @@ Write-Host "Java: $jbr (version $(JavaMajor $jbr))"; Write-Host "SDK:  $sdk"
 
 Step "5/5 Build the app (the first time this downloads a lot and can take 10+ minutes)"
 Push-Location android
-.\gradlew.bat assembleDebug --console=plain
+$jdkFwd = $jbr -replace '\\', '/'
+.\gradlew.bat assembleDebug --console=plain "-Dorg.gradle.java.installations.paths=$jdkFwd"
 $code = $LASTEXITCODE
 Pop-Location
 if ($code -ne 0) { Fail "Gradle build failed. Scroll up for the first red error, or open the 'android' folder in Android Studio and press Run; it often fixes missing SDK parts by itself." }
