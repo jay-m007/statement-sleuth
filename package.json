@@ -8,5 +8,11 @@
     "build": "node tools/build.js",
     "serve": "node tools/build.js && node tools/serve.js"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/local-notifications": "^8.3.1"
+  }
 }

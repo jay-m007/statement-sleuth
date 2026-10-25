@@ -6,6 +6,7 @@ import { feeLetter, duplicateLetter } from "./letters.js";
 import { today as todayStr } from "./dates.js";
 
 export { buildICS, googleCalendarLink, feeLetter, duplicateLetter, upcoming, readStatement, findSubscriptions, subscriptionTotals, todayStr };
+export { planNotifications, hashId } from "./notify.js";
 
 /** One call for the page: CSV text in, everything out. */
 export function analyze(csvText, opts = {}) {

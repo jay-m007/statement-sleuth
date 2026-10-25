@@ -29,6 +29,19 @@ Everything runs in the browser. The page has a Content Security Policy with `con
 
 Statement text is untrusted input: the page builds its DOM with `textContent` only, and a description like `<img onerror=...>` is shown as plain text (checked in a real browser).
 
+## Android app (phone reminders)
+
+The same code runs inside an Android app made with Capacitor. The one thing the website cannot do is ring your phone when it is closed, so the app does: it schedules local notifications at 9 am on the days you pick (3 days before, 1 day before and so on). No server, no internet.
+
+- `engine/notify.js` plans which notifications to schedule (pure functions, 9 tests). It plans 90 days ahead and at most 60 notifications, and the app re-plans every time it is opened, so open it about once a month.
+- `web/app.js` talks to the Capacitor `LocalNotifications` plugin only when it is running inside the app; on the website nothing changes.
+- Reminders use inexact alarms, so they can arrive a few minutes late, and the app does not need the restricted exact-alarm permission.
+- Privacy policy: `web/privacy.html`.
+
+Build on Windows (needs Node and Android Studio, opened once): run `powershell -ExecutionPolicy Bypass -File tools/android-build.ps1`. It tests, builds, finds Android Studio's Java and SDK, runs Gradle and leaves `Statement-Sleuth.apk` next to the repo folder. Or open the `android` folder in Android Studio and press Run.
+
+Honest limits of the app: it has been tested in a simulated phone (the plugin calls are mocked) and on a real phone only after you try it; iOS is not built (needs a Mac); the first Android release would need a Play Store account and a 14-day closed test.
+
 ## Honest limits
 
 - CSV only (no PDF, no Excel directly). Bank formats vary; if yours is not read correctly, the error says what is missing.
@@ -40,7 +53,7 @@ Statement text is untrusted input: the page builds its DOM with `textContent` on
 ## Run it
 
 ```
-npm test        # 44 tests, no dependencies
+npm test        # 53 tests, no dependencies
 npm run serve   # builds site/ and serves http://localhost:8080
 ```
 
