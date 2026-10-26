@@ -1,4 +1,4 @@
-import { analyze, buildICS, googleCalendarLink, feeLetter, duplicateLetter, upcoming, todayStr, planNotifications } from "./engine/index.js";
+import { analyze, readDocument, buildICS, googleCalendarLink, feeLetter, duplicateLetter, upcoming, todayStr, planNotifications } from "./engine/index.js";
 import { sampleStatement } from "./engine/sample.js";
 import { nextDue, subscriptionInsights } from "./engine/subs.js";
 import { pretty, prettyShort, daysBetween } from "./engine/dates.js";
@@ -126,16 +126,34 @@ function run(text) {
   savePlan();
   show();
 }
-function handleFile(file) {
-  if (!file) return;
-  if (/\.pdf$/i.test(file.name)) return showError("PDF statements are not supported yet. Please download the CSV version from your bank.");
-  if (/\.xlsx?$/i.test(file.name)) return showError("Excel files are not supported directly. Open it in Excel and use Save as CSV, then choose that file.");
-  if (file.size > 8e6) return showError("That file is larger than 8 MB. Try a shorter date range.");
-  const fr = new FileReader();
-  fr.onload = () => run(String(fr.result));
-  fr.onerror = () => showError("Could not read that file.");
-  fr.readAsText(file);
+let pending = null; // a locked PDF waiting for its password
+function showPw(on, wrong) {
+  $("pwbox").hidden = !on;
+  if (on) { $("pw").value = ""; $("pw").focus(); if (wrong) showError("That password did not work. Try again."); }
 }
+async function loadFile(file, password) {
+  showError("");
+  if (file.size > 25e6) return showError("That file is larger than 25 MB. Try a shorter date range.");
+  const stop = busy();
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const { rows } = await readDocument(file.name, bytes, { password });
+    pending = null; showPw(false);
+    run(rows);
+  } catch (e) {
+    if (e && e.code === "PDF_PASSWORD") { pending = file; showPw(true, false); }
+    else if (e && e.code === "PDF_WRONG_PASSWORD") { pending = file; showPw(true, true); }
+    else { showPw(false); showError(e && e.message ? e.message : "Could not read that file."); }
+  } finally { stop(); }
+}
+function busy() {
+  const d = $("drop");
+  d.classList.add("busy");
+  return () => d.classList.remove("busy");
+}
+function handleFile(file) { if (file) { pending = null; loadFile(file); } }
+$("pwgo").addEventListener("click", () => { if (pending) loadFile(pending, $("pw").value); });
+$("pw").addEventListener("keydown", (e) => { if (e.key === "Enter" && pending) loadFile(pending, $("pw").value); });
 
 function show() {
   const r = state.result;

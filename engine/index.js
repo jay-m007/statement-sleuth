@@ -7,10 +7,12 @@ import { today as todayStr } from "./dates.js";
 
 export { buildICS, googleCalendarLink, feeLetter, duplicateLetter, upcoming, readStatement, findSubscriptions, subscriptionTotals, todayStr };
 export { planNotifications, hashId } from "./notify.js";
+export { readDocument, ACCEPT, SUPPORTED_TEXT } from "./readers/index.js";
+export { PdfError } from "./readers/pdf.js";
 
 /** One call for the page: CSV text in, everything out. */
-export function analyze(csvText, opts = {}) {
-  const { txns, skipped, hint } = readStatement(csvText, opts);
+export function analyze(csvTextOrRows, opts = {}) {
+  const { txns, skipped, hint } = readStatement(csvTextOrRows, opts);
   const asOf = opts.asOf || todayStr();
   const fees = findFees(txns);
   const subs = findSubscriptions(txns, asOf);

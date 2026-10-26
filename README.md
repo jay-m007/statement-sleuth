@@ -12,7 +12,7 @@ Find the bank fees you can ask back, find the subscriptions you forgot, and get 
 
 ## What it does
 
-1. **Reads a bank statement CSV.** Finds the header even with junk lines above it; handles separate Debit/Credit columns or one signed Amount; reads `05/03/26`, `5 Mar 2026`, `₹1,299.00 Dr`, `(500.00)` and similar.
+1. **Reads a bank statement in almost any file type:** PDF (including password-protected ones), Excel (.xlsx), Word (.docx), CSV, TSV, TXT, OpenDocument (.ods), OFX/QFX, QIF and HTML tables. Not supported: scanned PDFs or photos (no text to read) and the old .xls/.doc formats (the app says how to convert them). Everything is read on the device. Details are below. For tabular files it finds the header even with junk lines above it; handles separate Debit/Credit columns or one signed Amount; reads `05/03/26`, `5 Mar 2026`, `₹1,299.00 Dr`, `(500.00)` and similar.
 2. **Finds fees:** overdraft, late payment, minimum balance, ATM, annual, SMS, foreign-exchange markup, returned cheque, maintenance, transfer. A GST/tax line next to a fee is added to it. A fee that already has a matching refund is marked as refunded.
 3. **Says how likely a request is to work.** First-time fees rate higher than repeat ones. It says "worth asking", never "you will get this back".
 4. **Writes the letter.** A polite, specific request you can edit, copy, or open in your email app. No legal claims.
@@ -22,6 +22,20 @@ Find the bank fees you can ask back, find the subscriptions you forgot, and get 
    - **Browser alerts and a yellow bar** when you open the page and something is due soon.
    - **Add your own** subscriptions (for example an annual plan) and keep the list on your device.
 7. **Spots possible double charges** (same text and amount within two days).
+
+## File types
+
+| Type | How it is read |
+|---|---|
+| CSV, TSV, TXT | Own parser; detects the delimiter and the encoding (UTF-8, UTF-16, Windows-1252) |
+| Excel `.xlsx` / `.xlsm` | Own ZIP and XML reader (no library); real date cells are converted; the sheet that looks like a statement is used |
+| Word `.docx` | Own reader; tables become rows, plain paragraphs are split on tabs or wide gaps |
+| OpenDocument `.ods` | Own reader |
+| PDF | [pdf.js](https://github.com/mozilla/pdf.js) (Apache-2.0, bundled in `web/vendor/pdfjs`, loaded only when a PDF is chosen). Text is placed in columns by position, wrapped descriptions are joined, repeated page headers are dropped. Locked PDFs ask for the password, which is used once and never saved |
+| OFX / QFX / QIF | Own readers (these formats are already structured) |
+| HTML | Table cells are read from the page |
+
+Every reader returns the same table of rows, and the same column detection then runs on it, so a statement gives the same result in any format (`tests/readers.test.js` checks that 11 formats of one statement give identical transactions). PDFs are read by position, so check the numbers against your statement.
 
 ## Privacy
 

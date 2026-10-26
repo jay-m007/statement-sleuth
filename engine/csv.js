@@ -134,8 +134,8 @@ export function parseAmount(s) {
  * Turn raw CSV text into transactions: {date, desc, amount} where amount < 0 is money going out.
  * Returns {txns, skipped, columns} or throws Error with a plain-language message.
  */
-export function readStatement(text, opts = {}) {
-  const rows = parseCSV(text);
+export function readStatement(input, opts = {}) {
+  const rows = Array.isArray(input) ? input.map((r) => r.map((x) => String(x ?? "").trim())) : parseCSV(input);
   if (!rows.length) throw new Error("That file looks empty.");
   const cols = detectColumns(rows);
   if (!cols) {
