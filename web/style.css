@@ -268,3 +268,16 @@ button,.drop,.card,.fig,.tag,.tabs button{-webkit-tap-highlight-color:transparen
   body{background-attachment:fixed}
   html{scroll-behavior:smooth}
 }
+
+/* more file types */
+.formats{margin-top:.2rem;color:var(--ink-2);font-size:.82rem}
+.pwbox{margin-top:1rem;padding:1rem;border-radius:16px;border:1px solid var(--rule);background:var(--paper);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.pwbox label{display:block;margin-bottom:.7rem}
+.pwbox .muted{margin:.6rem 0 0;font-size:.85rem}
+.pwrow{display:flex;gap:.6rem}
+.pwrow input{flex:1;min-width:0;font:inherit;color:var(--ink);background:rgba(255,255,255,.07);border:1px solid var(--rule);border-radius:10px;padding:.6rem .8rem;min-height:2.75rem}
+.pwrow input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px rgba(255,217,61,.25)}
+.drop.busy{opacity:.7;pointer-events:none}
+.drop.busy strong::after{content:"";display:inline-block;width:1em;height:1em;margin-left:.6em;vertical-align:-.15em;border:2px solid var(--ink-2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:no-preference){.pwbox:not([hidden]){animation:rise .45s var(--ease) both}}

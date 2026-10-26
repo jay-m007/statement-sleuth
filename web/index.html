@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#070b14">
 <title>Statement Sleuth</title>
@@ -34,17 +34,24 @@
 
     <div class="pick">
       <label class="drop" id="drop" for="file">
-        <input id="file" type="file" accept=".csv,text/csv,text/plain">
-        <strong>Choose your statement (.csv)</strong>
+        <input id="file" type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.ods,.docx,.pdf,.ofx,.qfx,.qif,.html,.htm,text/csv,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        <strong>Choose your statement</strong>
         <span>or drag it here</span>
+        <small class="formats">PDF, Excel, Word, CSV and more</small>
       </label>
       <button class="ghost" id="sample" type="button">Try it with a sample statement</button>
+    </div>
+    <div id="pwbox" class="pwbox" hidden>
+      <label for="pw"><strong>This PDF is locked.</strong> Enter its password. Banks often use your date of birth or part of your phone number or PAN; check the email that came with the file.</label>
+      <div class="pwrow"><input id="pw" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="PDF password"><button class="btn" id="pwgo" type="button">Open PDF</button></div>
+      <p class="muted">The password is used once, on this device, to open the file. It is never saved.</p>
     </div>
     <p id="error" class="error" role="alert" hidden></p>
 
     <details class="how">
-      <summary>How do I get a CSV from my bank?</summary>
-      <p>Most banks offer it in net banking or the app: open <em>Account statement</em>, choose a date range (6 to 12 months works best), and pick <em>CSV</em> or <em>Excel</em> as the format. If you only get an Excel file, open it and use <em>Save as CSV</em>. PDFs are not supported yet.</p>
+      <summary>How do I get my statement from my bank?</summary>
+      <p>Most banks offer it in net banking or the app: open <em>Account statement</em>, choose a date range (6 to 12 months works best) and download it. Any of these work: <strong>PDF</strong>, <strong>Excel (.xlsx)</strong>, <strong>Word (.docx)</strong>, <strong>CSV</strong>, OpenDocument (.ods), OFX/QFX, QIF, TSV, TXT or HTML. Password-protected PDFs are fine, you will be asked for the password.</p>
+      <p>Not supported: scanned PDFs and photos (they have no text to read) and the old Excel .xls format (open it and Save as .xlsx first). Tip: if your bank gives both, CSV and Excel are the most exact; PDFs are read by position, so check the numbers.</p>
       <p>The file needs a date, a description (also called narration or particulars), and either one amount column or separate debit and credit columns.</p>
     </details>
 
