@@ -140,17 +140,40 @@ function handleFile(file) {
 function show() {
   const r = state.result;
   if (!r && !state.plan.length) { $("start").hidden = false; $("results").hidden = true; return; }
+  const firstShow = $("results").hidden;
   $("start").hidden = true; $("results").hidden = false;
   $("period").textContent = r ? `Statement from ${pretty(r.period.from)} to ${pretty(r.period.to)} · ${r.txns.length} transactions${r.skipped ? ` (${r.skipped} rows skipped)` : ""}` : "Saved reminders on this device";
   const hint = $("hint");
   hint.hidden = !(r && r.hint);
   if (r && r.hint) hint.textContent = "Every amount in this file is positive. If this is a credit-card statement, tick “spending shows as positive numbers” under Settings and load it again.";
-  renderFigures(); renderRenewals(); renderFees(); renderLedger(); renderBanner();
+  renderFigures(); renderRenewals(); renderFees(); renderLedger(); renderBanner(); if (firstShow) countUp($("figures"));
   document.body.classList.add("js-anim");
   requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add("go")));
 }
 
 function fig(num, label, hi) { return h("div", { class: "fig" }, h("div", { class: "n" }, hi ? h("mark", { class: "fee" }, num) : num), h("div", { class: "l" }, label)); }
+/* count the headline numbers up from zero once, so the screen feels alive */
+function countUp(root) {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  for (const node of root.querySelectorAll(".fig .n")) {
+    const target = node.querySelector("mark") || node;
+    const text = target.textContent;
+    const m = text.match(/^(\D*)([\d,.]+)(\D*)$/);
+    if (!m) continue;
+    const end = parseFloat(m[2].replace(/,/g, ""));
+    if (!(end > 0)) continue;
+    const dec = (m[2].split(".")[1] || "").length;
+    const fmt = (v) => v.toLocaleString(state.currency === "₹" ? "en-IN" : "en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    const t0 = performance.now(), dur = 900;
+    const tick = (t) => {
+      const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      target.textContent = m[1] + fmt(end * e) + m[3];
+      if (k < 1) requestAnimationFrame(tick); else target.textContent = text;
+    };
+    target.textContent = m[1] + fmt(0) + m[3];
+    requestAnimationFrame(tick);
+  }
+}
 function renderFigures() {
   const r = state.result, f = $("figures");
   f.replaceChildren();
@@ -417,3 +440,17 @@ if (state.keep) {
   if (Array.isArray(saved) && saved.length) { state.plan = rollForward(saved); savePlan(); show(); }
 }
 setInterval(renderBanner, 60 * 60 * 1000);
+
+/* tap ripple on every button */
+document.addEventListener("pointerdown", (e) => {
+  const b = e.target.closest && e.target.closest(".btn,.ghost,.small,.cta");
+  if (!b || b.disabled) return;
+  const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2;
+  const s = document.createElement("span");
+  s.className = "ripple";
+  s.style.width = s.style.height = d + "px";
+  s.style.left = e.clientX - r.left - d / 2 + "px";
+  s.style.top = e.clientY - r.top - d / 2 + "px";
+  b.append(s);
+  setTimeout(() => s.remove(), 650);
+}, { passive: true });

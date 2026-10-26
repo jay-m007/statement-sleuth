@@ -196,3 +196,75 @@ h1{background:linear-gradient(110deg,#ffffff 25%,#ffe45c 95%);-webkit-background
   .fig .n{font-size:1.02rem}
   .fig .l{font-size:.72rem;line-height:1.25;margin-top:.15rem}
 }
+
+/* ===== motion layer ===== */
+:root{--ease:cubic-bezier(.22,1,.36,1);--spring:cubic-bezier(.34,1.56,.64,1)}
+button,.drop,.card,.fig,.tag,.tabs button{-webkit-tap-highlight-color:transparent}
+.btn,.ghost,.small,.cta,.tabs button,.drop,.fig,.card,.panel-box{transition:transform .22s var(--ease),box-shadow .25s ease,background-color .2s ease,border-color .2s ease,color .2s ease,filter .2s ease}
+.btn,.ghost,.small,.cta{position:relative;overflow:hidden}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);animation:ripple .6s var(--ease) forwards}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+@media (prefers-reduced-motion:no-preference){
+  /* hover and press */
+  @media (hover:hover){
+    .btn:hover,.small:hover,.ghost:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.35)}
+    .btn:hover,.small[aria-pressed="true"]:hover{filter:brightness(1.07)}
+    .cta:hover{transform:translateY(-3px) scale(1.012);box-shadow:0 14px 38px rgba(255,183,3,.55),inset 0 1px 0 rgba(255,255,255,.55);filter:brightness(1.05)}
+    .card:hover,.fig:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(0,0,0,.45);border-color:rgba(255,217,61,.35)}
+    .drop:hover{transform:translateY(-2px) scale(1.01)}
+    .tabs button:hover:not([aria-selected="true"]){color:var(--ink);background:rgba(255,255,255,.06)}
+    .ledger-demo .row:hover{background:rgba(255,255,255,.05)}
+    .brand:hover .mark{transform:rotate(-8deg) scale(1.12)}
+    table tbody tr:hover td{background-color:rgba(255,255,255,.04)}
+  }
+  .mark{transition:transform .35s var(--spring)}
+  .btn:active,.small:active,.ghost:active,.cta:active,.tabs button:active{transform:scale(.95);transition-duration:.08s}
+  .card:active,.fig:active{transform:scale(.985);transition-duration:.08s}
+  .drop.over{transform:scale(1.03);box-shadow:0 0 0 6px rgba(255,217,61,.18)}
+
+  /* first screen: one orchestrated entrance */
+  .top{animation:fadeDown .6s var(--ease) both}
+  .start h1{animation:rise .7s var(--ease) .05s both}
+  .start .lede{animation:rise .7s var(--ease) .18s both}
+  .ledger-demo{animation:rise .7s var(--ease) .3s both}
+  .ledger-demo .row{animation:rowIn .5s var(--ease) both}
+  .ledger-demo .row:nth-child(1){animation-delay:.45s}.ledger-demo .row:nth-child(2){animation-delay:.55s}
+  .ledger-demo .row:nth-child(3){animation-delay:.65s}.ledger-demo .row:nth-child(4){animation-delay:.75s}
+  .pick{animation:rise .7s var(--ease) .5s both}
+  .start .how,.start .opts,#error{animation:rise .7s var(--ease) .65s both}
+  .drop{animation:breathe 3.6s ease-in-out 1.4s infinite}
+  .drop:hover,.drop.over{animation:none}
+  .dot{animation:pulse 2.6s ease-in-out infinite}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-14px)}}
+  @keyframes rise{from{opacity:0;transform:translateY(18px)}}
+  @keyframes rowIn{from{opacity:0;transform:translateX(-14px)}}
+  @keyframes breathe{0%,100%{border-color:rgba(157,176,211,.4)}50%{border-color:rgba(255,217,61,.75)}}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(94,224,160,.2)}50%{box-shadow:0 0 0 7px rgba(94,224,160,0)}}
+
+  /* results: figures pop in, cards cascade, panels slide on tab change */
+  #results:not([hidden]) .toolbar{animation:fadeDown .45s var(--ease) both}
+  #results:not([hidden]) .fig{animation:pop .6s var(--spring) both}
+  #results:not([hidden]) .fig:nth-child(2){animation-delay:.1s}
+  #results:not([hidden]) .fig:nth-child(3){animation-delay:.2s}
+  .remind-hero{animation:rise .6s var(--ease) .25s both}
+  [role="tabpanel"]:not([hidden]){animation:panelIn .42s var(--ease) both}
+  [role="tabpanel"]:not([hidden]) .card,[role="tabpanel"]:not([hidden]) .panel-box{animation:rise .5s var(--ease) both}
+  [role="tabpanel"]:not([hidden]) > :nth-child(2){animation-delay:.06s}
+  [role="tabpanel"]:not([hidden]) > :nth-child(3){animation-delay:.12s}
+  [role="tabpanel"]:not([hidden]) > :nth-child(4){animation-delay:.18s}
+  [role="tabpanel"]:not([hidden]) > :nth-child(5){animation-delay:.24s}
+  [role="tabpanel"]:not([hidden]) > :nth-child(n+6){animation-delay:.3s}
+  .banner:not([hidden]){animation:slideIn .55s var(--spring) both}
+  .tabs button[aria-selected="true"]{animation:tabPop .38s var(--spring)}
+  .remind-hero.on .rh-icon{animation:checkPop .6s var(--spring) both}
+  .remind-hero .status:not(:empty){animation:rise .35s var(--ease) both}
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.86)}}
+  @keyframes panelIn{from{opacity:0;transform:translateX(18px)}}
+  @keyframes slideIn{from{opacity:0;transform:translateY(-22px) scale(.96)}}
+  @keyframes tabPop{0%{transform:scale(.88)}100%{transform:scale(1)}}
+  @keyframes checkPop{0%{transform:scale(.3) rotate(-30deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+
+  /* soft ambient drift in the background glow */
+  body{background-attachment:fixed}
+  html{scroll-behavior:smooth}
+}
