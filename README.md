@@ -4,7 +4,18 @@ Find the bank fees you can ask back, find the subscriptions you forgot, and get 
 
 **Live demo: https://jay-m007.github.io/statement-sleuth/** (click "Try it with a sample statement")
 
-![Statement Sleuth on a phone](docs/phone-renewals.png)
+![Statement Sleuth demo: load a PDF, see the renewals, fees and the refund letter](docs/demo.gif)
+
+[Watch the demo as a video](docs/demo.mp4)
+
+<p>
+<img src="docs/shot-1-start.png" width="23%" alt="Start screen">
+<img src="docs/shot-2-renewals.png" width="23%" alt="Renewals and the reminders card">
+<img src="docs/shot-3-fees-letter.png" width="23%" alt="Fees and the refund letter">
+<img src="docs/shot-4-statement.png" width="23%" alt="The statement, searchable">
+</p>
+
+**Android app:** download `Statement-Sleuth.apk` from the [Releases page](https://github.com/jay-m007/statement-sleuth/releases/latest), copy it to your phone and tap it (allow "install unknown apps" if asked). It is the same app as the website, with phone notifications at 9 am before each renewal. The screenshots above are from the phone-sized web build, which shares the same screens as the app.
 
 ## The startup this comes from
 
