@@ -7,7 +7,7 @@ import { readDocument } from "../engine/readers/index.js";
 import { readStatement } from "../engine/csv.js";
 import { layoutToRows } from "../engine/readers/pdf-layout.js";
 import { serialToISO } from "../engine/readers/xlsx.js";
-import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
+import * as pdfjs from "../web/vendor/pdfjs/pdf.min.js"; // the bundled copy, so CI needs no npm install
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), "fixtures");
 const load = (n) => new Uint8Array(readFileSync(join(dir, n)));
